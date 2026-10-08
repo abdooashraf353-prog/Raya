@@ -1,1 +1,940 @@
-# Top
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Heroes | بوابة الموظفين</title>
+    
+    <!-- Firebase SDKs (v8 for simplicity in single file) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0f172a; 
+            color: #f8fafc;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Animated Background Gradient */
+        .bg-animated {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.15), transparent 25%),
+                        radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+            animation: pulse-bg 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-bg {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        .glass-input:focus {
+            outline: none;
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .hidden-view { display: none !important; }
+        
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Buttons Styling */
+        .choice-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: visible; /* تم التعديل للسماح للنقاط بالبروز للخارج */
+            cursor: pointer;
+        }
+        .choice-btn:active { transform: scale(0.95); }
+        .btn-selected {
+            border: 2px solid white !important;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5) !important;
+            transform: scale(1.05);
+        }
+
+        /* Hierarchy Colors for Lines */
+        .line-1 { background: linear-gradient(135deg, #3b82f6, #2563eb); border: 1px solid #60a5fa; }
+        .line-1:hover { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        .line-2 { background: linear-gradient(135deg, #10b981, #059669); border: 1px solid #34d399; }
+        .line-2:hover { box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
+        .line-3 { background: linear-gradient(135deg, #fbbf24, #d97706); border: 1px solid #fcd34d; color: #451a03; font-weight: 800; }
+        .line-3:hover { box-shadow: 0 0 25px rgba(251, 191, 36, 0.7); }
+
+        .line-plus3 {
+            background: linear-gradient(270deg, #ff0055, #a200ff, #00e5ff, #ff0055);
+            background-size: 300% 300%;
+            border: 2px solid rgba(255,255,255,0.8);
+            color: white;
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            animation: glowingGradient 3s ease infinite, pulseGlow 2s infinite alternate;
+            position: relative;
+            z-index: 1;
+        }
+        .line-plus3::before {
+            content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(270deg, #ff0055, #a200ff, #00e5ff, #ff0055);
+            background-size: 300% 300%; z-index: -1; filter: blur(15px);
+            animation: glowingGradient 3s ease infinite; opacity: 0.8; border-radius: inherit;
+        }
+        .line-plus3:hover { transform: scale(1.05) translateY(-5px); box-shadow: 0 20px 40px rgba(162, 0, 255, 0.5); }
+
+        @keyframes glowingGradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 10px rgba(255,255,255,0.2); } 100% { box-shadow: 0 0 25px rgba(255,255,255,0.6); } }
+
+        /* تم تعديل شكل النقاط وتأثيرها لتكون جذابة جدا وتشد الانتباه */
+        .point-badge {
+            position: absolute; 
+            top: -15px; 
+            right: -15px; 
+            background: linear-gradient(135deg, #ff0055, #ff5500); 
+            color: white;
+            font-size: 0.85rem; 
+            font-weight: 900; 
+            padding: 4px 12px; 
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(255, 0, 85, 0.6); 
+            border: 2px solid #fff; 
+            z-index: 20;
+            animation: badge-pulse 1.5s infinite;
+        }
+        @keyframes badge-pulse {
+            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 0, 85, 0.6); }
+            50% { transform: scale(1.1) translateY(-3px); box-shadow: 0 8px 20px rgba(255, 0, 85, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 0, 85, 0.6); }
+        }
+
+        /* Toast Message */
+        #toast {
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            transition: bottom 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 1000;
+        }
+        #toast.show { bottom: 20px; }
+
+        /* Scrollbar for tables */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 4px; }
+    </style>
+</head>
+<body class="antialiased flex items-center justify-center p-4">
+
+    <div class="bg-animated"></div>
+
+    <div class="w-full max-w-5xl relative z-10">
+        
+        <!-- Header -->
+        <div class="text-center mb-8 fade-in">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-l from-cyan-400 to-blue-600 mb-2">
+                Top Heroes
+            </h1>
+            <p class="text-slate-400 font-medium tracking-wide">بوابة المبيعات المميزة</p>
+        </div>
+
+        <!-- ================== LOGIN VIEW ================== -->
+        <div id="loginView" class="glass-panel rounded-3xl p-8 md:p-12 w-full max-w-md mx-auto fade-in">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/20 text-blue-400 mb-4">
+                    <i class="fa-solid fa-user-tie text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white">تسجيل الدخول</h2>
+            </div>
+
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2 ml-1">رقم الموبايل</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                            <i class="fa-solid fa-mobile-screen"></i>
+                        </span>
+                        <input type="tel" id="loginPhone" required placeholder="01xxxxxxxxx" maxlength="11"
+                               class="glass-input w-full rounded-xl py-3 pr-10 pl-4 text-sm" dir="ltr" style="text-align: right;">
+                    </div>
+                </div>
+
+                <div id="adminPassContainer" class="hidden-view">
+                    <label class="block text-sm font-semibold text-slate-300 mb-2 ml-1">كلمة المرور للإدارة</label>
+                    <input type="password" id="adminPassword" placeholder="أدخل كلمة المرور" 
+                           class="glass-input w-full rounded-xl py-3 px-4 text-sm">
+                </div>
+
+                <div id="employeeFields" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300 mb-2 ml-1">الاسم</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                                <i class="fa-regular fa-user"></i>
+                            </span>
+                            <input type="text" id="loginName" placeholder="الاسم" 
+                                   class="glass-input w-full rounded-xl py-3 pr-10 pl-4 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-300 mb-2 ml-1">البراند</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                                <i class="fa-solid fa-store"></i>
+                            </span>
+                            <input type="text" id="loginBrand" placeholder="اسم البراند" 
+                                   class="glass-input w-full rounded-xl py-3 pr-10 pl-4 text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" onclick="handleLogin()" 
+                        class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white rounded-xl font-bold text-lg shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-1 mt-6 flex justify-center items-center gap-2">
+                    <span>دخول</span>
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- ================== EMPLOYEE DASHBOARD ================== -->
+        <div id="employeeView" class="hidden-view fade-in w-full">
+            
+            <!-- User Info Bar -->
+            <div class="glass-panel rounded-2xl p-4 mb-6 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                        <i class="fa-solid fa-user-check text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-400">مرحباً بك،</p>
+                        <p id="empWelcomeName" class="font-bold text-lg text-white">---</p>
+                        <span id="empWelcomeBrand" class="inline-block px-2 py-0.5 rounded-full bg-slate-700/50 text-xs text-slate-300 mt-1 border border-slate-600">---</span>
+                    </div>
+                </div>
+                <div class="text-center bg-slate-800/80 px-4 py-2 rounded-xl border border-cyan-500/30 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+                    <p class="text-xs text-cyan-400 font-bold mb-1">إجمالي النقاط</p>
+                    <p id="empTotalPoints" class="text-3xl font-black text-white drop-shadow-md">0</p>
+                </div>
+                <button onclick="logout()" class="text-red-400 hover:text-red-300 transition-colors text-sm underline"><i class="fa-solid fa-right-from-bracket ml-1"></i>خروج</button>
+            </div>
+
+            <!-- Operation Container -->
+            <div class="glass-panel rounded-3xl p-6 md:p-10 border-t-4 border-t-cyan-500 mb-6">
+                
+                <!-- Step 0: National ID -->
+                <div class="mb-6 relative z-20">
+                    <label class="block text-lg font-bold text-white mb-3">
+                        <i class="fa-regular fa-id-card ml-2 text-cyan-400"></i>الرقم القومي للعميل
+                    </label>
+                    <input type="text" id="nationalId" maxlength="14" placeholder="أدخل 14 رقم..."
+                           class="glass-input w-full rounded-2xl py-4 px-6 text-xl text-center tracking-[0.3em] font-bold" dir="ltr">
+                    <div class="w-full bg-slate-700 h-1.5 mt-3 rounded-full overflow-hidden">
+                        <div id="nidProgress" class="bg-cyan-400 h-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div id="historyContainer" class="hidden-view mb-6 bg-slate-800/50 p-4 rounded-xl border border-slate-600">
+                    <h4 class="text-sm text-cyan-300 font-bold mb-2"><i class="fa-solid fa-clock-rotate-left ml-2"></i>سجل العميل</h4>
+                    <div id="historyList" class="text-xs text-slate-300 space-y-2"></div>
+                </div>
+
+                <!-- Step 1: Start Application -->
+                <div id="step1Container" class="hidden-view space-y-4 mb-8 fade-in relative z-10 text-center">
+                    <button id="startAppBtn" onclick="startApplication()" class="choice-btn glass-panel hover:bg-slate-700/50 text-white font-bold py-4 px-10 rounded-xl border border-slate-600 transition-all inline-flex items-center gap-3">
+                        <span class="point-badge">+1 نقطة</span>
+                        <i class="fa-solid fa-file-signature text-2xl text-blue-400"></i>
+                        <span class="text-xl">تقديم تقسيطى</span>
+                    </button>
+                </div>
+
+                <!-- Step 2: Status -->
+                <div id="step2Container" class="hidden-view space-y-4 mb-8 fade-in text-center border-t border-slate-700 pt-6">
+                    <h3 class="text-slate-300 font-semibold mb-4">حالة الطلب</h3>
+                    <div class="flex justify-center gap-4">
+                        <button onclick="setAppStatus('success', this)" class="status-btn glass-panel hover:bg-slate-700/50 text-white font-bold py-3 px-8 rounded-xl border border-green-500/50 transition-all text-green-400 relative">
+                            <i class="fa-solid fa-check-circle ml-2"></i> تم التقديم بنجاح
+                        </button>
+                        <button onclick="setAppStatus('fail', this)" class="status-btn glass-panel hover:bg-slate-700/50 text-white font-bold py-3 px-8 rounded-xl border border-red-500/50 transition-all text-red-400">
+                            <i class="fa-solid fa-times-circle ml-2"></i> لم يكتمل الطلب
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Lines (Only if success) -->
+                <div id="step3Container" class="hidden-view space-y-4 fade-in border-t border-slate-700 pt-6">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold text-white">إنجاز رائع! اختر الباقة</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 pt-3">
+                        <button onclick="selectLine('1 LINE', 1, this)" class="line-btn choice-btn line-1 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-white shadow-lg">
+                            <span class="point-badge">+1 نقطة</span>
+                            <span class="text-2xl font-bold tracking-widest">1 LINE</span>
+                        </button>
+                        <button onclick="selectLine('2 LINE', 2, this)" class="line-btn choice-btn line-2 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-white shadow-lg">
+                            <span class="point-badge">+2 نقطة</span>
+                            <span class="text-2xl font-bold tracking-widest">2 LINE</span>
+                        </button>
+                        <button onclick="selectLine('3 LINE', 3, this)" class="line-btn choice-btn line-3 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 shadow-lg">
+                            <span class="point-badge">+3 نقطة</span>
+                            <span class="text-2xl font-black tracking-widest">3 LINE</span>
+                        </button>
+                        <button onclick="selectLine('+3 LINE', 5, this)" class="line-btn choice-btn line-plus3 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 shadow-2xl">
+                            <span class="point-badge">+5 نقاط</span>
+                            <span class="text-3xl font-black tracking-widest drop-shadow-md">+3 LINE</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Confirm -->
+                <div id="submitOpContainer" class="mt-8 text-center hidden-view fade-in">
+                     <button onclick="confirmTransaction()" class="bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-bold py-3 px-10 rounded-full text-lg shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-transform hover:scale-105">
+                         <i class="fa-solid fa-save ml-2"></i> تأكيد وحفظ العملية
+                     </button>
+                </div>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="glass-panel rounded-3xl p-6 border border-yellow-500/20 fade-in">
+                <h3 class="text-xl font-bold mb-4 text-yellow-400 flex items-center justify-center"><i class="fa-solid fa-trophy ml-2"></i> قائمة الأوائل (Top Heroes)</h3>
+                <div id="leaderboardList" class="space-y-3">
+                    <!-- Dynamic -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ================== ADMIN VIEW ================== -->
+        <div id="adminView" class="hidden-view fade-in w-full max-w-6xl mx-auto">
+            <div class="glass-panel rounded-2xl p-6 mb-6 flex justify-between items-center shadow-lg border-t-4 border-red-500">
+                <h2 class="text-2xl font-bold text-white"><i class="fa-solid fa-user-shield ml-2 text-red-400"></i> لوحة الإدارة</h2>
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold transition">خروج</button>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-6 mb-6">
+                <!-- Controls -->
+                <div class="flex flex-wrap justify-between items-end mb-6 gap-4 border-b border-slate-700 pb-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-300 mb-2">فلترة المعاملات بالتاريخ</label>
+                        <input type="date" id="adminDateFilter" class="glass-input px-4 py-2 rounded-lg" onchange="loadAdminData()">
+                    </div>
+                    <button onclick="exportToExcel()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-500 transition shadow-[0_0_10px_rgba(34,197,94,0.4)]">
+                        <i class="fa-solid fa-file-excel ml-2"></i> تصدير إحصائيات الموظفين Excel
+                    </button>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex gap-4 mb-6">
+                    <button onclick="switchAdminTab('employees')" id="tabEmp" class="text-white font-bold py-2 px-6 rounded-lg bg-blue-600 transition">الموظفين و النقاط</button>
+                    <button onclick="switchAdminTab('transactions')" id="tabTrans" class="text-slate-400 font-bold py-2 px-6 rounded-lg bg-slate-800 transition hover:bg-slate-700">سجل معاملات العملاء</button>
+                </div>
+
+                <!-- Employees Table -->
+                <div id="adminEmployeesTab" class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse text-sm" id="adminTable">
+                        <thead>
+                            <tr class="bg-slate-800/80 text-cyan-400">
+                                <th class="p-4 border-b border-slate-700 rounded-tr-lg">الاسم</th>
+                                <th class="p-4 border-b border-slate-700">البراند</th>
+                                <th class="p-4 border-b border-slate-700">رقم الموبايل</th>
+                                <th class="p-4 border-b border-slate-700">النقاط</th>
+                                <th class="p-4 border-b border-slate-700">الطلبات</th>
+                                <th class="p-4 border-b border-slate-700">أرقام العملاء</th>
+                                <th class="p-4 border-b border-slate-700 rounded-tl-lg text-center">الإجراءات (تحكم / حذف)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody" class="text-slate-200"></tbody>
+                    </table>
+                </div>
+
+                <!-- Transactions Table -->
+                <div id="adminTransactionsTab" class="hidden-view overflow-x-auto">
+                    <table class="w-full text-right border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-800/80 text-amber-400">
+                                <th class="p-4 border-b border-slate-700 rounded-tr-lg">التاريخ</th>
+                                <th class="p-4 border-b border-slate-700">الرقم القومي للعميل</th>
+                                <th class="p-4 border-b border-slate-700">الموظف</th>
+                                <th class="p-4 border-b border-slate-700">الحالة</th>
+                                <th class="p-4 border-b border-slate-700">الباقة</th>
+                                <th class="p-4 border-b border-slate-700 rounded-tl-lg">النقاط المكتسبة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTransBody" class="text-slate-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="glass-panel px-6 py-3 rounded-full flex items-center gap-3 shadow-2xl border-l-4 border-l-green-500">
+            <i class="fa-solid fa-circle-check text-green-400 text-xl" id="toastIcon"></i>
+            <span id="toastMsg" class="font-bold text-white"></span>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script>
+        // إعدادات Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAUfiVn9d6ssAXyJebJZE9lHzEXIzf38dc",
+            authDomain: "raya-a4bb5.firebaseapp.com",
+            databaseURL: "https://raya-a4bb5-default-rtdb.firebaseio.com",
+            projectId: "raya-a4bb5",
+            storageBucket: "raya-a4bb5.firebasestorage.app",
+            messagingSenderId: "698811790975",
+            appId: "1:698811790975:web:9be89e4ecfefd6afe6714a",
+            measurementId: "G-CN04VMJKC2"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let currentUser = null;
+        let currentTransaction = {
+            nationalId: "",
+            status: "",
+            lineType: "",
+            pointsEarned: 0,
+            hasStarted: false
+        };
+
+        // المراقبة المباشرة لرقم الهاتف (لإظهار باسوورد المدير)
+        document.getElementById('loginPhone').addEventListener('input', function(e) {
+            let val = e.target.value.replace(/[^0-9]/g, '');
+            e.target.value = val;
+            if(val === '01501205502') {
+                document.getElementById('adminPassContainer').classList.remove('hidden-view');
+                document.getElementById('employeeFields').classList.add('hidden-view');
+            } else {
+                document.getElementById('adminPassContainer').classList.add('hidden-view');
+                document.getElementById('employeeFields').classList.remove('hidden-view');
+            }
+        });
+
+        // التحقق من الجلسة
+        window.onload = function() {
+            const savedUser = localStorage.getItem('topHeroesUser');
+            if(savedUser) {
+                currentUser = JSON.parse(savedUser);
+                if(currentUser.role === 'admin') {
+                    switchView('adminView');
+                    loadAdminData();
+                } else {
+                    switchView('employeeView');
+                    initEmployeeDashboard();
+                }
+            } else {
+                switchView('loginView');
+            }
+        };
+
+        function switchView(viewId) {
+            ['loginView', 'employeeView', 'adminView'].forEach(id => document.getElementById(id).classList.add('hidden-view'));
+            document.getElementById(viewId).classList.remove('hidden-view');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = message;
+            toast.style.borderLeftColor = type === 'success' ? '#22c55e' : '#ef4444';
+            document.getElementById('toastIcon').className = type === 'success' ? 'fa-solid fa-circle-check text-green-400 text-xl' : 'fa-solid fa-circle-xmark text-red-400 text-xl';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // --- وظائف تسجيل الدخول ---
+        function handleLogin() {
+            const phone = document.getElementById('loginPhone').value.trim();
+            if(phone === '01501205502') {
+                const pass = document.getElementById('adminPassword').value;
+                if(pass === '24232041') {
+                    currentUser = { role: 'admin', phone: phone };
+                    localStorage.setItem('topHeroesUser', JSON.stringify(currentUser));
+                    switchView('adminView');
+                    loadAdminData();
+                    showToast('تم دخول الإدارة');
+                } else {
+                    showToast('كلمة المرور غير صحيحة', 'error');
+                }
+                return;
+            }
+
+            const name = document.getElementById('loginName').value.trim();
+            const brand = document.getElementById('loginBrand').value.trim();
+
+            if(phone.length !== 11 || !name || !brand) {
+                showToast('يرجى إكمال البيانات ورقم موبايل صحيح', 'error');
+                return;
+            }
+
+            db.ref('users/' + phone).once('value').then((snapshot) => {
+                if(snapshot.exists()) {
+                    currentUser = snapshot.val();
+                } else {
+                    currentUser = {
+                        role: 'employee', phone: phone, name: name, brand: brand,
+                        points: 0, applicationsCount: 0
+                    };
+                    db.ref('users/' + phone).set(currentUser);
+                }
+                localStorage.setItem('topHeroesUser', JSON.stringify(currentUser));
+                switchView('employeeView');
+                initEmployeeDashboard();
+                showToast('تم تسجيل الدخول بنجاح');
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('topHeroesUser');
+            currentUser = null;
+            location.reload();
+        }
+
+        // --- وظائف الموظف ---
+        function initEmployeeDashboard() {
+            document.getElementById('empWelcomeName').innerText = currentUser.name;
+            document.getElementById('empWelcomeBrand').innerText = currentUser.brand;
+            
+            // مستمع النقاط
+            db.ref('users/' + currentUser.phone).on('value', (snapshot) => {
+                if(snapshot.exists()) {
+                    currentUser = snapshot.val();
+                    localStorage.setItem('topHeroesUser', JSON.stringify(currentUser));
+                    document.getElementById('empTotalPoints').innerText = currentUser.points;
+                }
+            });
+
+            // قائمة الأوائل
+            db.ref('users').orderByChild('points').on('value', (snapshot) => {
+                const list = document.getElementById('leaderboardList');
+                list.innerHTML = '';
+                let users = [];
+                snapshot.forEach(child => { if(child.val().role !== 'admin') users.push(child.val()); });
+                users.reverse(); 
+                users.slice(0, 5).forEach((u, index) => {
+                    let medal = '';
+                    if(index === 0) medal = '<i class="fa-solid fa-medal text-yellow-400 text-2xl"></i>';
+                    else if(index === 1) medal = '<i class="fa-solid fa-medal text-slate-300 text-xl"></i>';
+                    else if(index === 2) medal = '<i class="fa-solid fa-medal text-amber-600 text-lg"></i>';
+                    else medal = `<span class="font-bold text-slate-500">#${index+1}</span>`;
+
+                    list.innerHTML += `
+                        <div class="flex justify-between items-center p-3 bg-slate-800/80 rounded-xl border border-slate-700/50">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 text-center">${medal}</div>
+                                <div><p class="font-bold text-white text-sm">${u.name}</p><p class="text-xs text-slate-400">${u.brand}</p></div>
+                            </div>
+                            <div class="bg-cyan-500/20 px-3 py-1 rounded-lg text-cyan-400 font-bold">${u.points} pt</div>
+                        </div>`;
+                });
+            });
+
+            document.getElementById('nationalId').addEventListener('input', function(e) {
+                let val = e.target.value.replace(/[^0-9]/g, '');
+                e.target.value = val;
+                const len = val.length;
+                document.getElementById('nidProgress').style.width = `${(len/14)*100}%`;
+                
+                if(len === 14) {
+                    document.getElementById('nidProgress').classList.replace('bg-cyan-400', 'bg-green-400');
+                    checkCustomerHistory(val);
+                    document.getElementById('step1Container').classList.remove('hidden-view');
+                } else {
+                    document.getElementById('nidProgress').classList.replace('bg-green-400', 'bg-cyan-400');
+                    document.getElementById('step1Container').classList.add('hidden-view');
+                    resetFlow();
+                }
+            });
+            resetDashboardUI();
+        }
+
+        function checkCustomerHistory(nid) {
+            db.ref('transactions').orderByChild('nationalId').equalTo(nid).once('value', snap => {
+                const container = document.getElementById('historyContainer');
+                const list = document.getElementById('historyList');
+                list.innerHTML = '';
+                if(snap.exists()) {
+                    container.classList.remove('hidden-view');
+                    snap.forEach(child => {
+                        const t = child.val();
+                        let stHtml = t.status === 'success' ? '<span class="text-green-400">ناجح</span>' : '<span class="text-red-400">لم يكتمل</span>';
+                        list.innerHTML += `<div class="flex justify-between border-b border-slate-600/50 pb-1">
+                            <span>${t.dateString} | ${stHtml} ${t.lineType ? '- '+t.lineType : ''}</span>
+                            <span class="text-slate-400">${t.employeeName}</span>
+                        </div>`;
+                    });
+                } else {
+                    container.classList.add('hidden-view');
+                }
+            });
+        }
+
+        function resetFlow() {
+            currentTransaction = { nationalId: "", status: "", lineType: "", pointsEarned: 0, hasStarted: false };
+            document.getElementById('step2Container').classList.add('hidden-view');
+            document.getElementById('step3Container').classList.add('hidden-view');
+            document.getElementById('submitOpContainer').classList.add('hidden-view');
+            document.getElementById('startAppBtn').classList.remove('btn-selected', 'ring-2', 'ring-cyan-400');
+            document.querySelectorAll('.status-btn, .line-btn').forEach(b => b.classList.remove('btn-selected'));
+        }
+
+        function resetDashboardUI() {
+            document.getElementById('nationalId').value = '';
+            document.getElementById('nidProgress').style.width = '0%';
+            document.getElementById('step1Container').classList.add('hidden-view');
+            document.getElementById('historyContainer').classList.add('hidden-view');
+            resetFlow();
+        }
+
+        // مسار العملية
+        function startApplication() {
+            const nid = document.getElementById('nationalId').value;
+            if(nid.length !== 14) return showToast('رقم قومي غير صحيح', 'error');
+            
+            document.getElementById('startAppBtn').classList.add('btn-selected');
+            currentTransaction.nationalId = nid;
+            currentTransaction.hasStarted = true;
+            currentTransaction.pointsEarned = 1; // نقطة التقديم
+            
+            document.getElementById('step2Container').classList.remove('hidden-view');
+            document.getElementById('step3Container').classList.add('hidden-view');
+            document.getElementById('submitOpContainer').classList.remove('hidden-view');
+        }
+
+        function setAppStatus(status, btn) {
+            currentTransaction.status = status;
+            document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('btn-selected'));
+            btn.classList.add('btn-selected');
+
+            if(status === 'success') {
+                currentTransaction.pointsEarned = 1;
+                document.getElementById('step3Container').classList.remove('hidden-view');
+                document.getElementById('submitOpContainer').classList.add('hidden-view');
+            } else {
+                currentTransaction.pointsEarned = 1; 
+                currentTransaction.lineType = "";
+                document.getElementById('step3Container').classList.add('hidden-view');
+                document.getElementById('submitOpContainer').classList.remove('hidden-view');
+            }
+        }
+
+        function selectLine(type, pts, btn) {
+            currentTransaction.lineType = type;
+            currentTransaction.pointsEarned = 1 + pts; 
+            
+            document.querySelectorAll('.line-btn').forEach(b => b.classList.remove('btn-selected'));
+            btn.classList.add('btn-selected');
+            
+            document.getElementById('submitOpContainer').classList.remove('hidden-view');
+            if(type === '+3 LINE') showToast('اختيار استثنائي! 🏆');
+        }
+
+        function confirmTransaction() {
+            if(!currentTransaction.status) return showToast('يرجى تحديد حالة الطلب', 'error');
+            if(currentTransaction.status === 'success' && !currentTransaction.lineType) return showToast('يرجى اختيار الباقة', 'error');
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            const transData = {
+                nationalId: currentTransaction.nationalId,
+                status: currentTransaction.status,
+                lineType: currentTransaction.lineType,
+                pointsEarned: currentTransaction.pointsEarned,
+                employeePhone: currentUser.phone,
+                employeeName: currentUser.name,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                dateString: dateStr
+            };
+
+            db.ref('transactions').push(transData);
+
+            const userRef = db.ref('users/' + currentUser.phone);
+            userRef.once('value').then(snap => {
+                let u = snap.val();
+                u.points = (u.points || 0) + currentTransaction.pointsEarned;
+                u.applicationsCount = (u.applicationsCount || 0) + 1;
+                userRef.set(u);
+                
+                showToast(`تم الحفظ! أضفت ${currentTransaction.pointsEarned} نقطة 🌟`);
+                setTimeout(resetDashboardUI, 1500);
+            });
+        }
+
+        // --- وظائف الإدارة ---
+        function switchAdminTab(tab) {
+            if(tab === 'employees') {
+                document.getElementById('adminEmployeesTab').classList.remove('hidden-view');
+                document.getElementById('adminTransactionsTab').classList.add('hidden-view');
+                document.getElementById('tabEmp').className = 'text-white font-bold py-2 px-6 rounded-lg bg-blue-600 transition';
+                document.getElementById('tabTrans').className = 'text-slate-400 font-bold py-2 px-6 rounded-lg bg-slate-800 transition hover:bg-slate-700';
+            } else {
+                document.getElementById('adminEmployeesTab').classList.add('hidden-view');
+                document.getElementById('adminTransactionsTab').classList.remove('hidden-view');
+                document.getElementById('tabEmp').className = 'text-slate-400 font-bold py-2 px-6 rounded-lg bg-slate-800 transition hover:bg-slate-700';
+                document.getElementById('tabTrans').className = 'text-white font-bold py-2 px-6 rounded-lg bg-blue-600 transition';
+            }
+        }
+
+        function loadAdminData() {
+            const filterDate = document.getElementById('adminDateFilter').value;
+            
+            db.ref('users').once('value', usersSnap => {
+                const users = [];
+                usersSnap.forEach(c => { if(c.val().role !== 'admin') users.push(c.val()); });
+
+                let transRef = db.ref('transactions');
+                // في حالة الفلترة نقوم بجلب معاملات اليوم فقط، وإلا نجلب كل المعاملات لنعرف أرقام العملاء بالكامل
+                if(filterDate) {
+                    transRef = db.ref('transactions').orderByChild('dateString').equalTo(filterDate);
+                }
+
+                transRef.once('value', transSnap => {
+                    let stats = {};
+                    transSnap.forEach(t => {
+                        const d = t.val();
+                        if(!stats[d.employeePhone]) stats[d.employeePhone] = { pts: 0, apps: 0, nids: new Set() };
+                        stats[d.employeePhone].pts += d.pointsEarned;
+                        stats[d.employeePhone].apps += 1;
+                        if(d.nationalId) stats[d.employeePhone].nids.add(d.nationalId);
+                    });
+                    
+                    renderAdminTables(users, stats, filterDate);
+                });
+            });
+        }
+
+        function renderAdminTables(users, stats, filterDate) {
+            const tbody = document.getElementById('adminTableBody');
+            tbody.innerHTML = '';
+            
+            users.forEach(u => {
+                let pts = u.points || 0;
+                let apps = u.applicationsCount || 0;
+                let nidsArr = [];
+
+                if(stats && stats[u.phone]) {
+                    nidsArr = Array.from(stats[u.phone].nids);
+                    if(filterDate) {
+                        pts = stats[u.phone].pts;
+                        apps = stats[u.phone].apps;
+                    }
+                } else if (filterDate) {
+                    pts = 0; apps = 0;
+                }
+
+                let nidsHtml = nidsArr.length > 0 ? nidsArr.join('<br>') : 'لا يوجد';
+
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-700/50 hover:bg-slate-800/50 transition">
+                        <td class="p-3 font-semibold">${u.name}</td>
+                        <td class="p-3 text-slate-400">${u.brand}</td>
+                        <td class="p-3">${u.phone}</td>
+                        <td class="p-3 font-bold text-cyan-400">${pts}</td>
+                        <td class="p-3">${apps}</td>
+                        <td class="p-3 text-xs text-slate-300 tracking-widest text-right leading-relaxed" dir="ltr">${nidsHtml}</td>
+                        <td class="p-3 flex justify-center gap-1 items-center flex-wrap">
+                            <input type="number" id="pts_${u.phone}" class="w-14 rounded bg-slate-700 border border-slate-600 text-white px-1 text-center h-8" placeholder="الرقم">
+                            <button onclick="customModifyPts('${u.phone}', 'add')" class="bg-green-600 hover:bg-green-500 text-white w-8 h-8 rounded shadow"><i class="fa-solid fa-plus"></i></button>
+                            <button onclick="customModifyPts('${u.phone}', 'sub')" class="bg-amber-600 hover:bg-amber-500 text-white w-8 h-8 rounded shadow"><i class="fa-solid fa-minus"></i></button>
+                            
+                            <!-- زر التعديل الجديد -->
+                            <button onclick="editEmployee('${u.phone}', '${u.name}', '${u.brand}')" class="bg-blue-600 hover:bg-blue-500 text-white w-8 h-8 rounded shadow ml-2" title="تعديل بيانات الموظف"><i class="fa-solid fa-pen"></i></button>
+                            
+                            <button onclick="deleteEmployee('${u.phone}')" class="bg-red-600 hover:bg-red-500 text-white w-8 h-8 rounded shadow" title="حذف الموظف نهائياً"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // تحميل المعاملات في التاب الثاني
+            const transBody = document.getElementById('adminTransBody');
+            transBody.innerHTML = '';
+            let refQuery = db.ref('transactions');
+            if(filterDate) { refQuery = db.ref('transactions').orderByChild('dateString').equalTo(filterDate); }
+            
+            refQuery.once('value', snap => {
+                let transList = [];
+                snap.forEach(c => transList.push(c.val()));
+                transList.reverse(); // الأحدث أولاً
+                
+                transList.forEach(t => {
+                    let stHtml = t.status === 'success' ? '<span class="text-green-400"><i class="fa-solid fa-check"></i> ناجح</span>' : '<span class="text-red-400"><i class="fa-solid fa-xmark"></i> لم يكتمل</span>';
+                    transBody.innerHTML += `
+                        <tr class="border-b border-slate-700/50 hover:bg-slate-800/50 transition">
+                            <td class="p-3">${t.dateString}</td>
+                            <td class="p-3 font-bold tracking-wider" dir="ltr">${t.nationalId}</td>
+                            <td class="p-3">${t.employeeName}</td>
+                            <td class="p-3">${stHtml}</td>
+                            <td class="p-3 font-bold text-blue-300">${t.lineType || '---'}</td>
+                            <td class="p-3 text-cyan-400 font-bold">+${t.pointsEarned}</td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+
+        // دالة التعديل الجديدة (تقوم بتعديل الاسم ورقم الموبايل دون فقد البيانات)
+        function editEmployee(oldPhone, oldName, oldBrand) {
+            const newName = prompt("أدخل الاسم الجديد:", oldName);
+            if (!newName || newName.trim() === '') return;
+            
+            const newPhone = prompt("أدخل رقم الموبايل الجديد:", oldPhone);
+            if (!newPhone || newPhone.trim().length !== 11) {
+                if(newPhone !== null) showToast('عفواً، يجب أن يكون رقم الموبايل 11 رقماً', 'error');
+                return;
+            }
+
+            const finalName = newName.trim();
+            const finalPhone = newPhone.trim();
+
+            if (finalPhone !== oldPhone) {
+                // التأكد أن الرقم الجديد غير مستخدم
+                db.ref('users/' + finalPhone).once('value').then(checkSnap => {
+                    if(checkSnap.exists() && checkSnap.val().role !== 'admin') {
+                        showToast('رقم الموبايل الجديد مسجل لموظف آخر بالفعل!', 'error');
+                        return;
+                    }
+                    
+                    // نقل البيانات للمسار الجديد
+                    db.ref('users/' + oldPhone).once('value').then(snap => {
+                        let userData = snap.val();
+                        userData.name = finalName;
+                        userData.phone = finalPhone;
+                        
+                        db.ref('users/' + finalPhone).set(userData).then(() => {
+                            // حذف المسار القديم
+                            db.ref('users/' + oldPhone).remove().then(() => {
+                                // تحديث المعاملات السابقة لترتبط بالرقم والاسم الجديد
+                                db.ref('transactions').orderByChild('employeePhone').equalTo(oldPhone).once('value', tSnap => {
+                                    if(tSnap.exists()){
+                                        let updates = {};
+                                        tSnap.forEach(child => {
+                                            updates[child.key + '/employeePhone'] = finalPhone;
+                                            updates[child.key + '/employeeName'] = finalName;
+                                        });
+                                        db.ref('transactions').update(updates).then(() => {
+                                            loadAdminData();
+                                            showToast('تم تعديل الاسم والموبايل بنجاح ونقل السجلات');
+                                        });
+                                    } else {
+                                        loadAdminData();
+                                        showToast('تم تعديل الاسم والموبايل بنجاح');
+                                    }
+                                });
+                            });
+                        });
+                    });
+                });
+            } else {
+                if(finalName !== oldName) {
+                    // تحديث الاسم فقط
+                    db.ref('users/' + oldPhone).update({ name: finalName }).then(() => {
+                        // تحديث الاسم في السجلات
+                        db.ref('transactions').orderByChild('employeePhone').equalTo(oldPhone).once('value', tSnap => {
+                            if(tSnap.exists()){
+                                let updates = {};
+                                tSnap.forEach(child => {
+                                    updates[child.key + '/employeeName'] = finalName;
+                                });
+                                db.ref('transactions').update(updates).then(() => {
+                                    loadAdminData();
+                                    showToast('تم تعديل الاسم بنجاح');
+                                });
+                            } else {
+                                loadAdminData();
+                                showToast('تم تعديل الاسم بنجاح');
+                            }
+                        });
+                    });
+                }
+            }
+        }
+
+        function customModifyPts(phone, action) {
+            const inputVal = document.getElementById(`pts_${phone}`).value;
+            const amount = parseInt(inputVal);
+            
+            if(isNaN(amount) || amount <= 0) return showToast('يرجى إدخال رقم صحيح أكبر من الصفر', 'error');
+            
+            if(confirm(`هل أنت متأكد من ${action==='add'?'إضافة':'خصم'} ${amount} نقطة؟`)) {
+                const ref = db.ref('users/' + phone + '/points');
+                ref.once('value').then(snap => {
+                    let current = snap.val() || 0;
+                    let newVal = action === 'add' ? current + amount : current - amount;
+                    if(newVal < 0) newVal = 0;
+                    ref.set(newVal).then(() => {
+                        document.getElementById(`pts_${phone}`).value = '';
+                        loadAdminData();
+                        showToast('تم تحديث النقاط بنجاح');
+                    });
+                });
+            }
+        }
+
+        function deleteEmployee(phone) {
+            if(confirm('تحذير: هل أنت متأكد من حذف هذا الموظف نهائياً بكل بياناته؟ هذا الإجراء لا يمكن التراجع عنه!')) {
+                db.ref('users/' + phone).remove().then(() => {
+                    loadAdminData();
+                    showToast('تم حذف الموظف بنجاح');
+                });
+            }
+        }
+
+        function exportToExcel() {
+            let table = document.getElementById("adminTable");
+            let rows = Array.from(table.rows);
+            let csvContent = "\uFEFF"; 
+            
+            rows.forEach(row => {
+                let rowData = [];
+                // تخطي عمود "الإجراءات" (الأخير) عند التصدير
+                for(let i=0; i<row.cells.length - 1; i++) {
+                    // استبدال النص لتجاوز مشكلة الأسطر المتعددة (للأرقام القومية) في إكسيل
+                    rowData.push('"' + row.cells[i].innerText.replace(/"/g, '""') + '"');
+                }
+                csvContent += rowData.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "تقرير_الموظفين_TopHeroes.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
