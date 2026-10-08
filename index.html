@@ -81,7 +81,7 @@
         .choice-btn {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            overflow: visible; /* تم التعديل للسماح للنقاط بالبروز للخارج */
+            overflow: visible;
             cursor: pointer;
         }
         .choice-btn:active { transform: scale(0.95); }
@@ -121,7 +121,7 @@
         @keyframes glowingGradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         @keyframes pulseGlow { 0% { box-shadow: 0 0 10px rgba(255,255,255,0.2); } 100% { box-shadow: 0 0 25px rgba(255,255,255,0.6); } }
 
-        /* تم تعديل شكل النقاط وتأثيرها لتكون جذابة جدا وتشد الانتباه */
+        /* Points Badge */
         .point-badge {
             position: absolute; 
             top: -15px; 
@@ -350,9 +350,15 @@
                         <label class="block text-sm font-bold text-slate-300 mb-2">فلترة المعاملات بالتاريخ</label>
                         <input type="date" id="adminDateFilter" class="glass-input px-4 py-2 rounded-lg" onchange="loadAdminData()">
                     </div>
-                    <button onclick="exportToExcel()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-500 transition shadow-[0_0_10px_rgba(34,197,94,0.4)]">
-                        <i class="fa-solid fa-file-excel ml-2"></i> تصدير إحصائيات الموظفين Excel
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <!-- زر الفورمات الجديد -->
+                        <button onclick="formatAllData()" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-bold transition shadow-[0_0_10px_rgba(239,68,68,0.4)] flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> فورمات (حذف الكل)
+                        </button>
+                        <button onclick="exportToExcel()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-500 transition shadow-[0_0_10px_rgba(34,197,94,0.4)]">
+                            <i class="fa-solid fa-file-excel ml-2"></i> تصدير إحصائيات الموظفين Excel
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Tabs -->
@@ -714,7 +720,6 @@
                 usersSnap.forEach(c => { if(c.val().role !== 'admin') users.push(c.val()); });
 
                 let transRef = db.ref('transactions');
-                // في حالة الفلترة نقوم بجلب معاملات اليوم فقط، وإلا نجلب كل المعاملات لنعرف أرقام العملاء بالكامل
                 if(filterDate) {
                     transRef = db.ref('transactions').orderByChild('dateString').equalTo(filterDate);
                 }
@@ -767,17 +772,13 @@
                             <input type="number" id="pts_${u.phone}" class="w-14 rounded bg-slate-700 border border-slate-600 text-white px-1 text-center h-8" placeholder="الرقم">
                             <button onclick="customModifyPts('${u.phone}', 'add')" class="bg-green-600 hover:bg-green-500 text-white w-8 h-8 rounded shadow"><i class="fa-solid fa-plus"></i></button>
                             <button onclick="customModifyPts('${u.phone}', 'sub')" class="bg-amber-600 hover:bg-amber-500 text-white w-8 h-8 rounded shadow"><i class="fa-solid fa-minus"></i></button>
-                            
-                            <!-- زر التعديل الجديد -->
                             <button onclick="editEmployee('${u.phone}', '${u.name}', '${u.brand}')" class="bg-blue-600 hover:bg-blue-500 text-white w-8 h-8 rounded shadow ml-2" title="تعديل بيانات الموظف"><i class="fa-solid fa-pen"></i></button>
-                            
                             <button onclick="deleteEmployee('${u.phone}')" class="bg-red-600 hover:bg-red-500 text-white w-8 h-8 rounded shadow" title="حذف الموظف نهائياً"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             });
 
-            // تحميل المعاملات في التاب الثاني
             const transBody = document.getElementById('adminTransBody');
             transBody.innerHTML = '';
             let refQuery = db.ref('transactions');
@@ -786,7 +787,7 @@
             refQuery.once('value', snap => {
                 let transList = [];
                 snap.forEach(c => transList.push(c.val()));
-                transList.reverse(); // الأحدث أولاً
+                transList.reverse();
                 
                 transList.forEach(t => {
                     let stHtml = t.status === 'success' ? '<span class="text-green-400"><i class="fa-solid fa-check"></i> ناجح</span>' : '<span class="text-red-400"><i class="fa-solid fa-xmark"></i> لم يكتمل</span>';
@@ -804,7 +805,24 @@
             });
         }
 
-        // دالة التعديل الجديدة (تقوم بتعديل الاسم ورقم الموبايل دون فقد البيانات)
+        // دالة الفورمات الجديدة (حذف الكل)
+        function formatAllData() {
+            if(confirm("⚠️ تحذير شديد: هل أنت متأكد تماماً من رغبتك في حذف جميع الموظفين وسجلات المعاملات والبدء من الصفر؟ لا يمكن التراجع عن هذا الإجراء!")) {
+                Promise.all([
+                    db.ref('users').remove(),
+                    db.ref('transactions').remove()
+                ]).then(() => {
+                    localStorage.removeItem('topHeroesUser');
+                    showToast('تم عمل فورمات ومسح جميع البيانات بنجاح');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                }).catch(error => {
+                    showToast('حدث خطأ أثناء الفورمات', 'error');
+                });
+            }
+        }
+
         function editEmployee(oldPhone, oldName, oldBrand) {
             const newName = prompt("أدخل الاسم الجديد:", oldName);
             if (!newName || newName.trim() === '') return;
@@ -819,23 +837,19 @@
             const finalPhone = newPhone.trim();
 
             if (finalPhone !== oldPhone) {
-                // التأكد أن الرقم الجديد غير مستخدم
                 db.ref('users/' + finalPhone).once('value').then(checkSnap => {
                     if(checkSnap.exists() && checkSnap.val().role !== 'admin') {
                         showToast('رقم الموبايل الجديد مسجل لموظف آخر بالفعل!', 'error');
                         return;
                     }
                     
-                    // نقل البيانات للمسار الجديد
                     db.ref('users/' + oldPhone).once('value').then(snap => {
                         let userData = snap.val();
                         userData.name = finalName;
                         userData.phone = finalPhone;
                         
                         db.ref('users/' + finalPhone).set(userData).then(() => {
-                            // حذف المسار القديم
                             db.ref('users/' + oldPhone).remove().then(() => {
-                                // تحديث المعاملات السابقة لترتبط بالرقم والاسم الجديد
                                 db.ref('transactions').orderByChild('employeePhone').equalTo(oldPhone).once('value', tSnap => {
                                     if(tSnap.exists()){
                                         let updates = {};
@@ -858,9 +872,7 @@
                 });
             } else {
                 if(finalName !== oldName) {
-                    // تحديث الاسم فقط
                     db.ref('users/' + oldPhone).update({ name: finalName }).then(() => {
-                        // تحديث الاسم في السجلات
                         db.ref('transactions').orderByChild('employeePhone').equalTo(oldPhone).once('value', tSnap => {
                             if(tSnap.exists()){
                                 let updates = {};
@@ -918,9 +930,7 @@
             
             rows.forEach(row => {
                 let rowData = [];
-                // تخطي عمود "الإجراءات" (الأخير) عند التصدير
                 for(let i=0; i<row.cells.length - 1; i++) {
-                    // استبدال النص لتجاوز مشكلة الأسطر المتعددة (للأرقام القومية) في إكسيل
                     rowData.push('"' + row.cells[i].innerText.replace(/"/g, '""') + '"');
                 }
                 csvContent += rowData.join(",") + "\n";
