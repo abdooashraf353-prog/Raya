@@ -577,6 +577,10 @@
                     document.getElementById('nidProgress').classList.replace('bg-cyan-400', 'bg-green-400');
                     checkCustomerHistory(val);
                     document.getElementById('step1Container').classList.remove('hidden-view');
+                    
+                    // إظهار زر الحفظ فوراً وحفظ الرقم القومي في المتغير
+                    currentTransaction.nationalId = val;
+                    document.getElementById('submitOpContainer').classList.remove('hidden-view');
                 } else {
                     document.getElementById('nidProgress').classList.replace('bg-green-400', 'bg-cyan-400');
                     document.getElementById('step1Container').classList.add('hidden-view');
@@ -611,7 +615,7 @@
             currentTransaction = { nationalId: "", status: "", lineType: "", pointsEarned: 0, hasStarted: false };
             document.getElementById('step2Container').classList.add('hidden-view');
             document.getElementById('step3Container').classList.add('hidden-view');
-            document.getElementById('submitOpContainer').classList.add('hidden-view');
+            document.getElementById('submitOpContainer').classList.add('hidden-view'); // يختفي فقط إذا تم مسح الرقم القومي
             document.getElementById('startAppBtn').classList.remove('btn-selected', 'ring-2', 'ring-cyan-400');
             document.querySelectorAll('.status-btn, .line-btn').forEach(b => b.classList.remove('btn-selected'));
         }
@@ -636,7 +640,7 @@
             
             document.getElementById('step2Container').classList.remove('hidden-view');
             document.getElementById('step3Container').classList.add('hidden-view');
-            document.getElementById('submitOpContainer').classList.remove('hidden-view');
+            document.getElementById('submitOpContainer').classList.remove('hidden-view'); // التأكد من ظهوره
         }
 
         function setAppStatus(status, btn) {
@@ -647,12 +651,11 @@
             if(status === 'success') {
                 currentTransaction.pointsEarned = 1;
                 document.getElementById('step3Container').classList.remove('hidden-view');
-                document.getElementById('submitOpContainer').classList.add('hidden-view');
+                // تم إزالة السطر الذي يخفي زر الحفظ هنا ليتمكن من الحفظ في أي وقت
             } else {
                 currentTransaction.pointsEarned = 1; 
                 currentTransaction.lineType = "";
                 document.getElementById('step3Container').classList.add('hidden-view');
-                document.getElementById('submitOpContainer').classList.remove('hidden-view');
             }
         }
 
@@ -663,19 +666,19 @@
             document.querySelectorAll('.line-btn').forEach(b => b.classList.remove('btn-selected'));
             btn.classList.add('btn-selected');
             
-            document.getElementById('submitOpContainer').classList.remove('hidden-view');
             if(type === '+3 LINE') showToast('اختيار استثنائي! 🏆');
         }
 
         function confirmTransaction() {
-            if(!currentTransaction.status) return showToast('يرجى تحديد حالة الطلب', 'error');
-            if(currentTransaction.status === 'success' && !currentTransaction.lineType) return showToast('يرجى اختيار الباقة', 'error');
+            // تم إزالة القيود التي تجبر الموظف على إكمال كل شيء
+            const finalStatus = currentTransaction.status || 'مبدئي / لم يكتمل';
+            const finalLine = currentTransaction.lineType || '---';
 
             const dateStr = new Date().toISOString().split('T')[0];
             const transData = {
                 nationalId: currentTransaction.nationalId,
-                status: currentTransaction.status,
-                lineType: currentTransaction.lineType,
+                status: finalStatus,
+                lineType: finalLine,
                 pointsEarned: currentTransaction.pointsEarned,
                 employeePhone: currentUser.phone,
                 employeeName: currentUser.name,
@@ -790,7 +793,15 @@
                 transList.reverse();
                 
                 transList.forEach(t => {
-                    let stHtml = t.status === 'success' ? '<span class="text-green-400"><i class="fa-solid fa-check"></i> ناجح</span>' : '<span class="text-red-400"><i class="fa-solid fa-xmark"></i> لم يكتمل</span>';
+                    let stHtml = '';
+                    if(t.status === 'success') {
+                        stHtml = '<span class="text-green-400"><i class="fa-solid fa-check"></i> ناجح</span>';
+                    } else if(t.status === 'fail') {
+                        stHtml = '<span class="text-red-400"><i class="fa-solid fa-xmark"></i> لم يكتمل</span>';
+                    } else {
+                        stHtml = `<span class="text-slate-400"><i class="fa-solid fa-pause"></i> ${t.status}</span>`;
+                    }
+                    
                     transBody.innerHTML += `
                         <tr class="border-b border-slate-700/50 hover:bg-slate-800/50 transition">
                             <td class="p-3">${t.dateString}</td>
