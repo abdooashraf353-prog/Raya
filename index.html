@@ -312,14 +312,15 @@
                             <span class="point-badge">+3 نقطة</span>
                             <span class="text-2xl font-black tracking-widest">3 LINE</span>
                         </button>
-                        <button onclick="selectLine('+3 LINE', 5, this)" class="line-btn choice-btn line-plus3 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 shadow-2xl">
-                            <span class="point-badge">+5 نقاط</span>
+                        <!-- تم تعديل النقاط إلى 10 -->
+                        <button onclick="selectLine('+3 LINE', 10, this)" class="line-btn choice-btn line-plus3 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 shadow-2xl">
+                            <span class="point-badge">+10 نقاط</span>
                             <span class="text-3xl font-black tracking-widest drop-shadow-md">+3 LINE</span>
                         </button>
                     </div>
                 </div>
                 
-                <!-- Confirm -->
+                <!-- Confirm (يظهر بعد التقديم مباشرة) -->
                 <div id="submitOpContainer" class="mt-8 text-center hidden-view fade-in">
                      <button onclick="confirmTransaction()" class="bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-bold py-3 px-10 rounded-full text-lg shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-transform hover:scale-105">
                          <i class="fa-solid fa-save ml-2"></i> تأكيد وحفظ العملية
@@ -351,7 +352,6 @@
                         <input type="date" id="adminDateFilter" class="glass-input px-4 py-2 rounded-lg" onchange="loadAdminData()">
                     </div>
                     <div class="flex items-center gap-3">
-                        <!-- زر الفورمات الجديد -->
                         <button onclick="formatAllData()" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-bold transition shadow-[0_0_10px_rgba(239,68,68,0.4)] flex items-center gap-2">
                             <i class="fa-solid fa-triangle-exclamation"></i> فورمات (حذف الكل)
                         </button>
@@ -577,10 +577,7 @@
                     document.getElementById('nidProgress').classList.replace('bg-cyan-400', 'bg-green-400');
                     checkCustomerHistory(val);
                     document.getElementById('step1Container').classList.remove('hidden-view');
-                    
-                    // إظهار زر الحفظ فوراً وحفظ الرقم القومي في المتغير
-                    currentTransaction.nationalId = val;
-                    document.getElementById('submitOpContainer').classList.remove('hidden-view');
+                    // تم إزالة السطر الذي يظهر زر الحفظ هنا لينتظر الموظف حتى يضغط على زر تقديم
                 } else {
                     document.getElementById('nidProgress').classList.replace('bg-green-400', 'bg-cyan-400');
                     document.getElementById('step1Container').classList.add('hidden-view');
@@ -601,7 +598,7 @@
                         const t = child.val();
                         let stHtml = t.status === 'success' ? '<span class="text-green-400">ناجح</span>' : '<span class="text-red-400">لم يكتمل</span>';
                         list.innerHTML += `<div class="flex justify-between border-b border-slate-600/50 pb-1">
-                            <span>${t.dateString} | ${stHtml} ${t.lineType ? '- '+t.lineType : ''}</span>
+                            <span>${t.dateString} | ${stHtml}${t.lineType ? '- '+t.lineType : ''}</span>
                             <span class="text-slate-400">${t.employeeName}</span>
                         </div>`;
                     });
@@ -615,7 +612,7 @@
             currentTransaction = { nationalId: "", status: "", lineType: "", pointsEarned: 0, hasStarted: false };
             document.getElementById('step2Container').classList.add('hidden-view');
             document.getElementById('step3Container').classList.add('hidden-view');
-            document.getElementById('submitOpContainer').classList.add('hidden-view'); // يختفي فقط إذا تم مسح الرقم القومي
+            document.getElementById('submitOpContainer').classList.add('hidden-view'); 
             document.getElementById('startAppBtn').classList.remove('btn-selected', 'ring-2', 'ring-cyan-400');
             document.querySelectorAll('.status-btn, .line-btn').forEach(b => b.classList.remove('btn-selected'));
         }
@@ -636,11 +633,14 @@
             document.getElementById('startAppBtn').classList.add('btn-selected');
             currentTransaction.nationalId = nid;
             currentTransaction.hasStarted = true;
-            currentTransaction.pointsEarned = 1; // نقطة التقديم
+            // احتساب نقطة التقديم
+            currentTransaction.pointsEarned = 1; 
             
             document.getElementById('step2Container').classList.remove('hidden-view');
             document.getElementById('step3Container').classList.add('hidden-view');
-            document.getElementById('submitOpContainer').classList.remove('hidden-view'); // التأكد من ظهوره
+            
+            // إظهار زر الحفظ فوراً ليتمكن الموظف من الحفظ بعد التقديم فقط
+            document.getElementById('submitOpContainer').classList.remove('hidden-view');
         }
 
         function setAppStatus(status, btn) {
@@ -651,11 +651,11 @@
             if(status === 'success') {
                 currentTransaction.pointsEarned = 1;
                 document.getElementById('step3Container').classList.remove('hidden-view');
-                // تم إزالة السطر الذي يخفي زر الحفظ هنا ليتمكن من الحفظ في أي وقت
             } else {
                 currentTransaction.pointsEarned = 1; 
                 currentTransaction.lineType = "";
                 document.getElementById('step3Container').classList.add('hidden-view');
+                document.querySelectorAll('.line-btn').forEach(b => b.classList.remove('btn-selected'));
             }
         }
 
@@ -670,8 +670,8 @@
         }
 
         function confirmTransaction() {
-            // تم إزالة القيود التي تجبر الموظف على إكمال كل شيء
-            const finalStatus = currentTransaction.status || 'مبدئي / لم يكتمل';
+            // حالة افتراضية إذا ضغط حفظ بعد التقديم مباشرة قبل اختيار الحالة أو الباقة
+            const finalStatus = currentTransaction.status || 'تم التقديم / مبدئي';
             const finalLine = currentTransaction.lineType || '---';
 
             const dateStr = new Date().toISOString().split('T')[0];
@@ -809,153 +809,3 @@
                             <td class="p-3">${t.employeeName}</td>
                             <td class="p-3">${stHtml}</td>
                             <td class="p-3 font-bold text-blue-300">${t.lineType || '---'}</td>
-                            <td class="p-3 text-cyan-400 font-bold">+${t.pointsEarned}</td>
-                        </tr>
-                    `;
-                });
-            });
-        }
-
-        // دالة الفورمات الجديدة (حذف الكل)
-        function formatAllData() {
-            if(confirm("⚠️ تحذير شديد: هل أنت متأكد تماماً من رغبتك في حذف جميع الموظفين وسجلات المعاملات والبدء من الصفر؟ لا يمكن التراجع عن هذا الإجراء!")) {
-                Promise.all([
-                    db.ref('users').remove(),
-                    db.ref('transactions').remove()
-                ]).then(() => {
-                    localStorage.removeItem('topHeroesUser');
-                    showToast('تم عمل فورمات ومسح جميع البيانات بنجاح');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                }).catch(error => {
-                    showToast('حدث خطأ أثناء الفورمات', 'error');
-                });
-            }
-        }
-
-        function editEmployee(oldPhone, oldName, oldBrand) {
-            const newName = prompt("أدخل الاسم الجديد:", oldName);
-            if (!newName || newName.trim() === '') return;
-            
-            const newPhone = prompt("أدخل رقم الموبايل الجديد:", oldPhone);
-            if (!newPhone || newPhone.trim().length !== 11) {
-                if(newPhone !== null) showToast('عفواً، يجب أن يكون رقم الموبايل 11 رقماً', 'error');
-                return;
-            }
-
-            const finalName = newName.trim();
-            const finalPhone = newPhone.trim();
-
-            if (finalPhone !== oldPhone) {
-                db.ref('users/' + finalPhone).once('value').then(checkSnap => {
-                    if(checkSnap.exists() && checkSnap.val().role !== 'admin') {
-                        showToast('رقم الموبايل الجديد مسجل لموظف آخر بالفعل!', 'error');
-                        return;
-                    }
-                    
-                    db.ref('users/' + oldPhone).once('value').then(snap => {
-                        let userData = snap.val();
-                        userData.name = finalName;
-                        userData.phone = finalPhone;
-                        
-                        db.ref('users/' + finalPhone).set(userData).then(() => {
-                            db.ref('users/' + oldPhone).remove().then(() => {
-                                db.ref('transactions').orderByChild('employeePhone').equalTo(oldPhone).once('value', tSnap => {
-                                    if(tSnap.exists()){
-                                        let updates = {};
-                                        tSnap.forEach(child => {
-                                            updates[child.key + '/employeePhone'] = finalPhone;
-                                            updates[child.key + '/employeeName'] = finalName;
-                                        });
-                                        db.ref('transactions').update(updates).then(() => {
-                                            loadAdminData();
-                                            showToast('تم تعديل الاسم والموبايل بنجاح ونقل السجلات');
-                                        });
-                                    } else {
-                                        loadAdminData();
-                                        showToast('تم تعديل الاسم والموبايل بنجاح');
-                                    }
-                                });
-                            });
-                        });
-                    });
-                });
-            } else {
-                if(finalName !== oldName) {
-                    db.ref('users/' + oldPhone).update({ name: finalName }).then(() => {
-                        db.ref('transactions').orderByChild('employeePhone').equalTo(oldPhone).once('value', tSnap => {
-                            if(tSnap.exists()){
-                                let updates = {};
-                                tSnap.forEach(child => {
-                                    updates[child.key + '/employeeName'] = finalName;
-                                });
-                                db.ref('transactions').update(updates).then(() => {
-                                    loadAdminData();
-                                    showToast('تم تعديل الاسم بنجاح');
-                                });
-                            } else {
-                                loadAdminData();
-                                showToast('تم تعديل الاسم بنجاح');
-                            }
-                        });
-                    });
-                }
-            }
-        }
-
-        function customModifyPts(phone, action) {
-            const inputVal = document.getElementById(`pts_${phone}`).value;
-            const amount = parseInt(inputVal);
-            
-            if(isNaN(amount) || amount <= 0) return showToast('يرجى إدخال رقم صحيح أكبر من الصفر', 'error');
-            
-            if(confirm(`هل أنت متأكد من ${action==='add'?'إضافة':'خصم'} ${amount} نقطة؟`)) {
-                const ref = db.ref('users/' + phone + '/points');
-                ref.once('value').then(snap => {
-                    let current = snap.val() || 0;
-                    let newVal = action === 'add' ? current + amount : current - amount;
-                    if(newVal < 0) newVal = 0;
-                    ref.set(newVal).then(() => {
-                        document.getElementById(`pts_${phone}`).value = '';
-                        loadAdminData();
-                        showToast('تم تحديث النقاط بنجاح');
-                    });
-                });
-            }
-        }
-
-        function deleteEmployee(phone) {
-            if(confirm('تحذير: هل أنت متأكد من حذف هذا الموظف نهائياً بكل بياناته؟ هذا الإجراء لا يمكن التراجع عنه!')) {
-                db.ref('users/' + phone).remove().then(() => {
-                    loadAdminData();
-                    showToast('تم حذف الموظف بنجاح');
-                });
-            }
-        }
-
-        function exportToExcel() {
-            let table = document.getElementById("adminTable");
-            let rows = Array.from(table.rows);
-            let csvContent = "\uFEFF"; 
-            
-            rows.forEach(row => {
-                let rowData = [];
-                for(let i=0; i<row.cells.length - 1; i++) {
-                    rowData.push('"' + row.cells[i].innerText.replace(/"/g, '""') + '"');
-                }
-                csvContent += rowData.join(",") + "\n";
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "تقرير_الموظفين_TopHeroes.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    </script>
-</body>
-</html>
