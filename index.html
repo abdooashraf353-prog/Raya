@@ -312,15 +312,14 @@
                             <span class="point-badge">+3 نقطة</span>
                             <span class="text-2xl font-black tracking-widest">3 LINE</span>
                         </button>
-                        <!-- تم تعديل النقاط إلى 10 -->
-                        <button onclick="selectLine('+3 LINE', 10, this)" class="line-btn choice-btn line-plus3 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 shadow-2xl">
-                            <span class="point-badge">+10 نقاط</span>
+                        <button onclick="selectLine('+3 LINE', 5, this)" class="line-btn choice-btn line-plus3 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 shadow-2xl">
+                            <span class="point-badge">+5 نقاط</span>
                             <span class="text-3xl font-black tracking-widest drop-shadow-md">+3 LINE</span>
                         </button>
                     </div>
                 </div>
                 
-                <!-- Confirm (يظهر بعد التقديم مباشرة) -->
+                <!-- Confirm -->
                 <div id="submitOpContainer" class="mt-8 text-center hidden-view fade-in">
                      <button onclick="confirmTransaction()" class="bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-bold py-3 px-10 rounded-full text-lg shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-transform hover:scale-105">
                          <i class="fa-solid fa-save ml-2"></i> تأكيد وحفظ العملية
@@ -352,6 +351,7 @@
                         <input type="date" id="adminDateFilter" class="glass-input px-4 py-2 rounded-lg" onchange="loadAdminData()">
                     </div>
                     <div class="flex items-center gap-3">
+                        <!-- زر الفورمات الجديد -->
                         <button onclick="formatAllData()" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-bold transition shadow-[0_0_10px_rgba(239,68,68,0.4)] flex items-center gap-2">
                             <i class="fa-solid fa-triangle-exclamation"></i> فورمات (حذف الكل)
                         </button>
@@ -577,7 +577,10 @@
                     document.getElementById('nidProgress').classList.replace('bg-cyan-400', 'bg-green-400');
                     checkCustomerHistory(val);
                     document.getElementById('step1Container').classList.remove('hidden-view');
-                    // تم إزالة السطر الذي يظهر زر الحفظ هنا لينتظر الموظف حتى يضغط على زر تقديم
+                    
+                    // إظهار زر الحفظ فوراً وحفظ الرقم القومي في المتغير
+                    currentTransaction.nationalId = val;
+                    document.getElementById('submitOpContainer').classList.remove('hidden-view');
                 } else {
                     document.getElementById('nidProgress').classList.replace('bg-green-400', 'bg-cyan-400');
                     document.getElementById('step1Container').classList.add('hidden-view');
@@ -612,7 +615,7 @@
             currentTransaction = { nationalId: "", status: "", lineType: "", pointsEarned: 0, hasStarted: false };
             document.getElementById('step2Container').classList.add('hidden-view');
             document.getElementById('step3Container').classList.add('hidden-view');
-            document.getElementById('submitOpContainer').classList.add('hidden-view'); 
+            document.getElementById('submitOpContainer').classList.add('hidden-view'); // يختفي فقط إذا تم مسح الرقم القومي
             document.getElementById('startAppBtn').classList.remove('btn-selected', 'ring-2', 'ring-cyan-400');
             document.querySelectorAll('.status-btn, .line-btn').forEach(b => b.classList.remove('btn-selected'));
         }
@@ -633,14 +636,11 @@
             document.getElementById('startAppBtn').classList.add('btn-selected');
             currentTransaction.nationalId = nid;
             currentTransaction.hasStarted = true;
-            // احتساب نقطة التقديم
-            currentTransaction.pointsEarned = 1; 
+            currentTransaction.pointsEarned = 1; // نقطة التقديم
             
             document.getElementById('step2Container').classList.remove('hidden-view');
             document.getElementById('step3Container').classList.add('hidden-view');
-            
-            // إظهار زر الحفظ فوراً ليتمكن الموظف من الحفظ بعد التقديم فقط
-            document.getElementById('submitOpContainer').classList.remove('hidden-view');
+            document.getElementById('submitOpContainer').classList.remove('hidden-view'); // التأكد من ظهوره
         }
 
         function setAppStatus(status, btn) {
@@ -651,11 +651,11 @@
             if(status === 'success') {
                 currentTransaction.pointsEarned = 1;
                 document.getElementById('step3Container').classList.remove('hidden-view');
+                // تم إزالة السطر الذي يخفي زر الحفظ هنا ليتمكن من الحفظ في أي وقت
             } else {
                 currentTransaction.pointsEarned = 1; 
                 currentTransaction.lineType = "";
                 document.getElementById('step3Container').classList.add('hidden-view');
-                document.querySelectorAll('.line-btn').forEach(b => b.classList.remove('btn-selected'));
             }
         }
 
@@ -670,8 +670,8 @@
         }
 
         function confirmTransaction() {
-            // حالة افتراضية إذا ضغط حفظ بعد التقديم مباشرة قبل اختيار الحالة أو الباقة
-            const finalStatus = currentTransaction.status || 'تم التقديم / مبدئي';
+            // تم إزالة القيود التي تجبر الموظف على إكمال كل شيء
+            const finalStatus = currentTransaction.status || 'مبدئي / لم يكتمل';
             const finalLine = currentTransaction.lineType || '---';
 
             const dateStr = new Date().toISOString().split('T')[0];
