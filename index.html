@@ -857,4 +857,113 @@
 
             if (finalPhone !== oldPhone) {
                 db.ref('users/' + finalPhone).once('value').then(checkSnap => {
-                    if(checkSnap.exists() && checkSnap.val().role !== 'admin')
+                    if(checkSnap.exists() && checkSnap.val().role !== 'admin') {
+                        showToast('رقم الموبايل الجديد مسجل لموظف آخر بالفعل!', 'error');
+                        return;
+                    }
+                    
+                    db.ref('users/' + oldPhone).once('value').then(snap => {
+                        let userData = snap.val();
+                        userData.name = finalName;
+                        userData.phone = finalPhone;
+                        
+                        db.ref('users/' + finalPhone).set(userData).then(() => {
+                            db.ref('users/' + oldPhone).remove().then(() => {
+                                db.ref('transactions').orderByChild('employeePhone').equalTo(oldPhone).once('value', tSnap => {
+                                    if(tSnap.exists()){
+                                        let updates = {};
+                                        tSnap.forEach(child => {
+                                            updates[child.key + '/employeePhone'] = finalPhone;
+                                            updates[child.key + '/employeeName'] = finalName;
+                                        });
+                                        db.ref('transactions').update(updates).then(() => {
+                                            loadAdminData();
+                                            showToast('تم تعديل الاسم والموبايل بنجاح ونقل السجلات');
+                                        });
+                                    } else {
+                                        loadAdminData();
+                                        showToast('تم تعديل الاسم والموبايل بنجاح');
+                                    }
+                                });
+                            });
+                        });
+                    });
+                });
+            } else {
+                if(finalName !== oldName) {
+                    db.ref('users/' + oldPhone).update({ name: finalName }).then(() => {
+                        db.ref('transactions').orderByChild('employeePhone').equalTo(oldPhone).once('value', tSnap => {
+                            if(tSnap.exists()){
+                                let updates = {};
+                                tSnap.forEach(child => {
+                                    updates[child.key + '/employeeName'] = finalName;
+                                });
+                                db.ref('transactions').update(updates).then(() => {
+                                    loadAdminData();
+                                    showToast('تم تعديل الاسم بنجاح');
+                                });
+                            } else {
+                                loadAdminData();
+                                showToast('تم تعديل الاسم بنجاح');
+                            }
+                        });
+                    });
+                }
+            }
+        }
+
+        function customModifyPts(phone, action) {
+            const inputVal = document.getElementById(`pts_${phone}`).value;
+            const amount = parseInt(inputVal);
+            
+            if(isNaN(amount) || amount <= 0) return showToast('يرجى إدخال رقم صحيح أكبر من الصفر', 'error');
+            
+            if(confirm(`هل أنت متأكد من ${action==='add'?'إضافة':'خصم'} ${amount} نقطة؟`)) {
+                const ref = db.ref('users/' + phone + '/points');
+                ref.once('value').then(snap => {
+                    let current = snap.val() || 0;
+                    let newVal = action === 'add' ? current + amount : current - amount;
+                    if(newVal < 0) newVal = 0;
+                    ref.set(newVal).then(() => {
+                        document.getElementById(`pts_${phone}`).value = '';
+                        loadAdminData();
+                        showToast('تم تحديث النقاط بنجاح');
+                    });
+                });
+            }
+        }
+
+        function deleteEmployee(phone) {
+            if(confirm('تحذير: هل أنت متأكد من حذف هذا الموظف نهائياً بكل بياناته؟ هذا الإجراء لا يمكن التراجع عنه!')) {
+                db.ref('users/' + phone).remove().then(() => {
+                    loadAdminData();
+                    showToast('تم حذف الموظف بنجاح');
+                });
+            }
+        }
+
+        function exportToExcel() {
+            let table = document.getElementById("adminTable");
+            let rows = Array.from(table.rows);
+            let csvContent = "\uFEFF"; 
+            
+            rows.forEach(row => {
+                let rowData = [];
+                for(let i=0; i<row.cells.length - 1; i++) {
+                    rowData.push('"' + row.cells[i].innerText.replace(/"/g, '""') + '"');
+                }
+                csvContent += rowData.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "تقرير_الموظفين_TopHeroes.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
